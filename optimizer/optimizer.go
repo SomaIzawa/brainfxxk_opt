@@ -48,10 +48,17 @@ func (o *Optimizer) optimizeExpressions(exprs []ast.Expression) ([]ast.Expressio
 				Expressions: []ast.Expression{optExpr},
 			}
 		case *ast.PointerDecrementExpression:
-			if last, ok := optimized[len(optimized)-1].(*ast.MultiplePointerIncrementExpression); ok {
-				last.Count += 1
-				last.Expressions = append(last.Expressions, optExpr)
-				continue
+			if len(optimized) > 0 {
+				if last, ok := optimized[len(optimized)-1].(*ast.MultiplePointerDecrementExpression); ok {
+					last.Count += 1
+					last.Expressions = append(last.Expressions, optExpr)
+					continue
+				}
+			}
+
+			optExpr = &ast.MultiplePointerDecrementExpression{
+				Count:       1,
+				Expressions: []ast.Expression{optExpr},
 			}
 		}
 

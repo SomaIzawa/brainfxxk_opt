@@ -117,7 +117,7 @@ func (i *Interpreter) runExpression(ctx context.Context, expr ast.Expression) er
 		}
 		i.Pointer += e.Count
 	case *ast.MultiplePointerDecrementExpression:
-		if i.Pointer - e.Count >= 0 && !i.Config.RaiseErrorOnOverflow {
+		if i.Pointer - e.Count < 0 && !i.Config.RaiseErrorOnOverflow {
 			return fmt.Errorf("%w: %d to pointer overflow, on %d:%d", ErrMemoryOverflow, i.Pointer, e.StartPos(), e.EndPos())
 		}
 		i.Pointer -= e.Count
