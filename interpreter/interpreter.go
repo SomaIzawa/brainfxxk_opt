@@ -121,6 +121,16 @@ func (i *Interpreter) runExpression(ctx context.Context, expr ast.Expression) er
 			return fmt.Errorf("%w: %d to pointer overflow, on %d:%d", ErrMemoryOverflow, i.Pointer, e.StartPos(), e.EndPos())
 		}
 		i.Pointer -= e.Count
+	case *ast.MultipleValueIncrementExpression:
+		if i.Memory[i.Pointer] + byte(e.Count) > 255 && !i.Config.RaiseErrorOnOverflow {
+			return fmt.Errorf("%w: %d to memory overflow, on %d:%d", ErrMemoryOverflow, i.Pointer, e.StartPos(), e.EndPos())
+		}
+		i.Memory[i.Pointer] += byte(e.Count)
+	case *ast.MultipleValueDecrementExpression:
+		if i.Memory[i.Pointer] - byte(e.Count) < 0 && !i.Config.RaiseErrorOnOverflow {
+			return fmt.Errorf("%w: %d to memory overflow, on %d:%d", ErrMemoryOverflow, i.Pointer, e.StartPos(), e.EndPos())
+		}
+		i.Memory[i.Pointer] -= byte(e.Count)
 	}
 	return nil
 }
