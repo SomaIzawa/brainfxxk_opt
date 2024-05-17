@@ -123,3 +123,32 @@ func (e *LoadZeroExpression) Bytes() []byte {
 func (e *LoadZeroExpression) String() string {
 	return string(e.Bytes())
 }
+type CopyExpression struct {
+	Expressions []Expression
+	Copys []Copy
+}
+
+type Copy struct {
+	Phase int
+	Count int
+}
+
+func (e *CopyExpression) StartPos() int {
+	return e.Expressions[0].StartPos()
+}
+
+func (e *CopyExpression) EndPos() int {
+	return e.Expressions[len(e.Expressions)-1].EndPos()
+}
+
+func (e *CopyExpression) Bytes() []byte {
+	b := []byte{}
+	for _, expr := range e.Expressions {
+		b = append(b, expr.Bytes()...)
+	}
+	return b
+}
+
+func (e *CopyExpression) String() string {
+	return string(e.Bytes())
+}

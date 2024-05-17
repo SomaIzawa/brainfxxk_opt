@@ -1,6 +1,8 @@
 package optimizer
 
 import (
+	"fmt"
+
 	"github.com/rosylilly/brainfxxk/ast"
 )
 
@@ -97,8 +99,36 @@ func (o *Optimizer) optimizeExpressions(exprs []ast.Expression) ([]ast.Expressio
 			}
 		} else {
 			ex, _ := o.optimizeExpressions(we.Body)
-			optExpr = &ast.WhileExpression{
-				Body: ex,
+			if a, b, c := checkConditions(ex); a && b && c {
+				copyOpt := &ast.CopyExpression{}
+				phase := 0
+				for i, exi := range ex {
+					switch exi.(type) {
+					case *ast.MultiplePointerDecrementExpression:
+						phase -= exi.(*ast.MultiplePointerDecrementExpression).Count
+					case *ast.MultiplePointerIncrementExpression:
+						phase += exi.(*ast.MultiplePointerIncrementExpression).Count
+					case *ast.MultipleValueDecrementExpression:
+						if i != 0 || i != len(ex) {
+							copyOpt.Copys = append(copyOpt.Copys, ast.Copy{
+								Phase: phase,
+								Count: 0 - exi.(*ast.MultipleValueDecrementExpression).Count,
+							})
+						}
+					case *ast.MultipleValueIncrementExpression:
+						copyOpt.Copys = append(copyOpt.Copys, ast.Copy{
+							Phase: phase,
+							Count: exi.(*ast.MultipleValueIncrementExpression).Count,
+						})
+					default:
+						fmt.Println("error!!")
+					}
+				}
+				optExpr = copyOpt
+			} else {
+				optExpr = &ast.WhileExpression{
+					Body: ex,
+				}
 			}
 		}
 	}
@@ -112,4 +142,46 @@ func (o *Optimizer) optimizeExpressions(exprs []ast.Expression) ([]ast.Expressio
 
 func (o *Optimizer) optimizeExpression(expr ast.Expression) (ast.Expression, error) {
 	return expr, nil
+}
+
+func checkConditions(exprs []ast.Expression) (bool, bool, bool) {
+	// 1. 先頭か末尾に.MultipleValueDecrementExpressionがある
+	firstOrLastMultipleValueDecrementExpression := false
+	if len(exprs) > 0 {
+		if _, ok := exprs[0].(*ast.MultipleValueDecrementExpression); ok {
+			firstOrLastMultipleValueDecrementExpression = true
+		}
+		if _, ok := exprs[len(exprs)-1].(*ast.MultipleValueDecrementExpression); ok {
+			firstOrLastMultipleValueDecrementExpression = true
+		}
+	}
+
+	// 2. +,-,>,<のみで配列は構成されている
+	validTarget := true
+	for _, expr := range exprs {
+		switch expr.(type) {
+		case *ast.MultiplePointerDecrementExpression, *ast.MultiplePointerIncrementExpression, *ast.MultipleValueDecrementExpression, *ast.MultipleValueIncrementExpression:
+			// Do nothing, valid animal
+		default:
+			validTarget = false
+			break
+		}
+		if !validTarget {
+			break
+		}
+	}
+
+	// 3. DogまたはCatにはAgeというプロパティが存在する。このプロパティの合計が全体で0になる
+	pSum := 0
+	for _, expr := range exprs {
+		switch e := expr.(type) {
+		case *ast.MultiplePointerIncrementExpression:
+			pSum += e.Count
+		case *ast.MultiplePointerDecrementExpression:
+			pSum -= e.Count
+		}
+	}
+	pSumZero := pSum == 0
+
+	return firstOrLastMultipleValueDecrementExpression, validTarget, pSumZero
 }
