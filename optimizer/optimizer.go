@@ -1,6 +1,8 @@
 package optimizer
 
-import "github.com/rosylilly/brainfxxk/ast"
+import (
+	"github.com/rosylilly/brainfxxk/ast"
+)
 
 type Optimizer struct {
 }
@@ -33,6 +35,7 @@ func (o *Optimizer) optimizeExpressions(exprs []ast.Expression) ([]ast.Expressio
 		switch optExpr.(type) {
 		case *ast.PointerIncrementExpression:
 			if len(optimized) > 0 {
+				// 一つ前が"MultiplePointerIncrementExpression"かどうか
 				if last, ok := optimized[len(optimized)-1].(*ast.MultiplePointerIncrementExpression); ok {
 					last.Count += 1
 					last.Expressions = append(last.Expressions, optExpr)
@@ -43,6 +46,12 @@ func (o *Optimizer) optimizeExpressions(exprs []ast.Expression) ([]ast.Expressio
 			optExpr = &ast.MultiplePointerIncrementExpression{
 				Count:       1,
 				Expressions: []ast.Expression{optExpr},
+			}
+		case *ast.PointerDecrementExpression:
+			if last, ok := optimized[len(optimized)-1].(*ast.MultiplePointerIncrementExpression); ok {
+				last.Count += 1
+				last.Expressions = append(last.Expressions, optExpr)
+				continue
 			}
 		}
 
