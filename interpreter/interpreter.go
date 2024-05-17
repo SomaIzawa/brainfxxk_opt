@@ -131,6 +131,8 @@ func (i *Interpreter) runExpression(ctx context.Context, expr ast.Expression) er
 			return fmt.Errorf("%w: %d to memory overflow, on %d:%d", ErrMemoryOverflow, i.Pointer, e.StartPos(), e.EndPos())
 		}
 		i.Memory[i.Pointer] -= byte(e.Count)
+	case *ast.LoadZeroExpression:
+		i.Memory[i.Pointer] = 0
 	}
 	return nil
 }

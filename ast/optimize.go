@@ -99,3 +99,27 @@ func (e *MultipleValueDecrementExpression) Bytes() []byte {
 func (e *MultipleValueDecrementExpression) String() string {
 	return string(e.Bytes())
 }
+
+type LoadZeroExpression struct {
+	Expressions []Expression
+}
+
+func (e *LoadZeroExpression) StartPos() int {
+	return e.Expressions[0].StartPos()
+}
+
+func (e *LoadZeroExpression) EndPos() int {
+	return e.Expressions[len(e.Expressions)-1].EndPos()
+}
+
+func (e *LoadZeroExpression) Bytes() []byte {
+	b := []byte{}
+	for _, expr := range e.Expressions {
+		b = append(b, expr.Bytes()...)
+	}
+	return b
+}
+
+func (e *LoadZeroExpression) String() string {
+	return string(e.Bytes())
+}

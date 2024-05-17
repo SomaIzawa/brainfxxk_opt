@@ -88,7 +88,21 @@ func (o *Optimizer) optimizeExpressions(exprs []ast.Expression) ([]ast.Expressio
 				Expressions: []ast.Expression{optExpr},
 			}
 		}
+	case *ast.WhileExpression: {
+		we := optExpr.(*ast.WhileExpression)
+
+		if we.String() == "[-]" {
+			optExpr = &ast.LoadZeroExpression{
+				Expressions: we.Body,
+			}
+		} else {
+			ex, _ := o.optimizeExpressions(we.Body)
+			optExpr = &ast.WhileExpression{
+				Body: ex,
+			}
 		}
+	}
+	}
 
 		optimized = append(optimized, optExpr)
 	}
